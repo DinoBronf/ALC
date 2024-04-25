@@ -28,3 +28,22 @@ def suma_pos_o_neg(A)-> bool:
         return True
     else:
         return False
+
+
+
+def elim_gaussiana():
+    A = np.array([[2,1,2,3],[4,3,3,4],[-2,2,-4,-12],[4,1,8,-3]])
+    Ac = A.copy()
+    cant_op = 0
+    m=A.shape[0]
+    n=A.shape[1]
+    for d in range(1,m):
+        pivot = A[d-1][d-1]
+        for i in range(1,m):
+            k = Ac[i][d-1]/pivot
+            A[i][d-1] = k
+            for j in range (1, n):
+                A[i][j] = Ac[i][j] - k*Ac[i-1][j]
+                cant_op += 1
+    return (A, cant_op) 
+print(elim_gaussiana())
