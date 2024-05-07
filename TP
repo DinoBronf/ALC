@@ -1,0 +1,133 @@
+import numpy as np
+import networkx as nx
+from scipy.linalg import solve_triangular
+
+import numpy as np
+
+def generate_matrix_fixed_ones(n, num_ones=100000):
+    # Generate a matrix with all zeros
+    matrix = np.zeros((n, n), dtype=int)
+
+    # Randomly select indices to set to 1
+    total_elements = n * n
+    indices = np.random.choice(total_elements, num_ones, replace=False)
+    row_indices, col_indices = np.unravel_index(indices, (n, n))
+    matrix[row_indices, col_indices] = 1
+
+    # Set the diagonal elements to 0
+    np.fill_diagonal(matrix, 0)
+
+    return matrix
+
+# Example usage:
+n = 100  # Dimension of the matrix
+num_ones = 50  # Number of ones in the matrix
+random_matrix = generate_matrix_fixed_ones(n, num_ones)
+print(random_matrix)
+
+
+W = generate_matrix(n)
+
+def dibujarGrafo(W, print_ejes=True):
+
+    options = {
+    'node_color': 'yellow',
+    'node_size': 200,
+    'width': 3,
+    'arrowstyle': '-|>',
+    'arrowsize': 10,
+    'with_labels' : True}
+
+    N = W.shape[0]
+    G = nx.DiGraph(W.T)
+
+    #renombro nodos de 1 a N
+    G = nx.relabel_nodes(G, {i:i+1 for i in range(N)})
+    if print_ejes:
+        print('Ejes: ', [e for e in G.edges])
+
+    nx.draw(G, pos=nx.spring_layout(G), **options)
+
+def matrizD(W):
+    D = np.zeros((len(W),len(W)))
+    for i in range(len(W)):
+        cj = 0
+        for j in range(len(W)):
+           cj += W[j][i]
+        if cj != 0:
+            D[i][i] = 1/cj
+        else:
+            D[i][i]= 0
+    return D
+
+def factorizacionLU(A):
+    n = len(A)
+    L = np.eye(n)  # Inicializar matriz L como una matriz identidad
+    U = np.copy(A)  # Inicializar U como una copia de A
+    for k in range(n - 1):  # Iterar hasta la penúltima fila
+        for i in range(k + 1, n):  # Iterar sobre las filas debajo de la diagonal
+            factor = U[i][k] / U[k][k]
+            L[i][k] = factor  # Almacenar factor en la matriz L
+            for j in range(k, n):  # Iterar sobre las columnas
+                U[i][j] -= factor * U[k][j]  # Actualizar la fila i de U
+    return L, U
+
+
+
+
+
+def calcularRanking(M, p):
+    npages = M.shape[0]
+    rnk = np.arange(0, npages) # ind{k] = i, la pagina k tienen el iesimo orden en la lista.
+    scr = np.zeros(npages) # scr[k] = alpha, la pagina k tiene un score de alpha
+    # CODIGO
+    D = matrizD(M)
+    I = np.eye(npages)
+    A = (I- p*(M @ D))
+    L , U = factorizacionLU(A)
+    b= np.ones(npages)
+    y= solve_triangular(L,b,lower = True)
+    x= solve_triangular(U,y)
+    normax= np.linalg.norm(x,1)
+    scr = x/normax
+    rnk = np.argsort(scr)
+    return rnk, scr
+
+
+def obtenerMaximoRankingScore(M, p):
+    output = -np.inf
+    # calculo el ranking y los scores
+    rnk, scr = calcularRanking(M, p)
+    output = np.max(scr)
+
+    return output
+
+
+
+import time
+
+import time
+
+def tiempo_de_ejecucion(funcion, *args, **kwargs):
+    """
+    Mide el tiempo de ejecución de una función.
+    
+    Parameters:
+        funcion (function): La función a medir.
+        *args: Argumentos posicionales para la función.
+        **kwargs: Argumentos de palabras clave para la función.
+        
+    Returns:
+        float: El tiempo de ejecución en segundos.
+    """
+    inicio = time.time()
+    funcion(*args, **kwargs)
+    fin = time.time()
+    tiempo_total = fin - inicio
+    return tiempo_total
+
+# Suponiendo que calcularRanking toma argumentos W y 0.5
+tiempo_total = tiempo_de_ejecucion(calcularRanking, W, 0.5)
+print("Tiempo total de ejecución:", tiempo_total, "segundos")
+
+
